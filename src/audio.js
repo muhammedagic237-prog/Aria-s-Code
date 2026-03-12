@@ -1,4 +1,5 @@
-// ===== Audio Engine (Web Audio API — no sound files needed) =====
+// ===== Audio Engine (Web Audio API & Howler) =====
+import { Howl } from 'howler';
 
 let audioCtx = null;
 
@@ -64,70 +65,25 @@ export function playCountTick(count) {
   playNote(baseFreq, 0.15, 'sine');
 }
 
-// Animal sound synthesizer — creates characteristic sounds for each animal
-export function playAnimalSound(animal) {
-  const ctx = getAudioContext();
+// Animal sounds using Howler with remote URLs
+const animalSounds = new Howl({
+  src: ['https://actions.google.com/sounds/v1/animals/lion_growl.ogg'], // dummy
+  html5: true,
+});
 
-  const createSound = (freqStart, freqEnd, duration, type = 'sawtooth', repeats = 1, gap = 0.2) => {
-    for (let r = 0; r < repeats; r++) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const startTime = ctx.currentTime + r * (duration + gap);
+export function playAnimalSound(animalId, url) {
+  // If we already have a howl for this, play it. Otherwise, create one and play.
+  // To avoid overlapping a bunch of animal sounds, we can stop existing ones
+  window.__currentAnimalHowl?.stop();
 
-      osc.type = type;
-      osc.frequency.setValueAtTime(freqStart, startTime);
-      osc.frequency.linearRampToValueAtTime(freqEnd, startTime + duration);
+  const sound = new Howl({
+    src: [url],
+    html5: true, // Force HTML5 Audio to avoid CORS issues
+    volume: 1.0,
+  });
 
-      gain.gain.setValueAtTime(0.35, startTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(startTime);
-      osc.stop(startTime + duration);
-    }
-  };
-
-  switch (animal) {
-    case 'cow':
-      createSound(120, 80, 1.5, 'square', 1);
-      break;
-    case 'cat':
-      createSound(600, 400, 1.5, 'sine', 1);
-      break;
-    case 'dog':
-      createSound(400, 300, 0.2, 'square', 5, 0.125);
-      break;
-    case 'bird':
-      createSound(1200, 1800, 0.166, 'sine', 6, 0.1);
-      break;
-    case 'frog':
-      createSound(200, 600, 0.22, 'square', 5, 0.1);
-      break;
-    case 'lion':
-      createSound(100, 50, 1.5, 'sawtooth', 1);
-      break;
-    case 'duck':
-      createSound(500, 400, 0.3, 'square', 4, 0.1);
-      break;
-    case 'pig':
-      createSound(300, 500, 0.4, 'sawtooth', 3, 0.15);
-      break;
-    case 'horse':
-      createSound(200, 350, 0.4, 'sawtooth', 3, 0.15);
-      break;
-    case 'sheep':
-      createSound(350, 300, 0.6, 'sawtooth', 2, 0.3);
-      break;
-    case 'elephant':
-      createSound(200, 500, 1.5, 'sawtooth', 1);
-      break;
-    case 'monkey':
-      createSound(600, 1000, 0.22, 'sine', 5, 0.1);
-      break;
-    default:
-      playNote(440, 1.5);
-  }
+  window.__currentAnimalHowl = sound;
+  sound.play();
 }
 
 // Speak a number aloud using TTS
@@ -153,20 +109,20 @@ export const PIANO_NOTES = [
   { note: 'C²', freq: 523.25, color: '#F43F5E', emoji: '❤️' },
 ];
 
-// Animals data
+// Animals data (using Google Sounds as a free, safe URL source)
 export const ANIMALS = [
-  { name: 'Cow', id: 'cow', emoji: '🐄', color: '#8B5CF6', sound: 'Moo!' },
-  { name: 'Cat', id: 'cat', emoji: '🐱', color: '#EC4899', sound: 'Meow!' },
-  { name: 'Dog', id: 'dog', emoji: '🐶', color: '#F97316', sound: 'Woof!' },
-  { name: 'Bird', id: 'bird', emoji: '🐦', color: '#3B82F6', sound: 'Tweet!' },
-  { name: 'Frog', id: 'frog', emoji: '🐸', color: '#22C55E', sound: 'Ribbit!' },
-  { name: 'Lion', id: 'lion', emoji: '🦁', color: '#EAB308', sound: 'Roar!' },
-  { name: 'Duck', id: 'duck', emoji: '🦆', color: '#06B6D4', sound: 'Quack!' },
-  { name: 'Pig', id: 'pig', emoji: '🐷', color: '#F472B6', sound: 'Oink!' },
-  { name: 'Horse', id: 'horse', emoji: '🐴', color: '#A16207', sound: 'Neigh!' },
-  { name: 'Sheep', id: 'sheep', emoji: '🐑', color: '#9CA3AF', sound: 'Baa!' },
-  { name: 'Elephant', id: 'elephant', emoji: '🐘', color: '#64748B', sound: 'Toot!' },
-  { name: 'Monkey', id: 'monkey', emoji: '🐵', color: '#D97706', sound: 'Ooh ooh!' },
+  { name: 'Cow', id: 'cow', emoji: '🐄', color: '#8B5CF6', url: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_c36fc8fb9f.mp3?filename=cow-moo-1-114002.mp3', sound: 'Moo!' },
+  { name: 'Cat', id: 'cat', emoji: '🐱', color: '#EC4899', url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_10ebd14652.mp3?filename=cat-meow-14536.mp3', sound: 'Meow!' },
+  { name: 'Dog', id: 'dog', emoji: '🐶', color: '#F97316', url: 'https://cdn.pixabay.com/download/audio/2022/03/24/audio_51bb37e725.mp3?filename=dog-barking-70772.mp3', sound: 'Woof!' },
+  { name: 'Bird', id: 'bird', emoji: '🐦', color: '#3B82F6', url: 'https://cdn.pixabay.com/download/audio/2021/09/06/audio_2486ebfcd4.mp3?filename=bird-chirping-11234.mp3', sound: 'Tweet!' },
+  { name: 'Frog', id: 'frog', emoji: '🐸', color: '#22C55E', url: 'https://cdn.pixabay.com/download/audio/2022/03/24/audio_3bed5e9ff0.mp3?filename=frog-croak-131154.mp3', sound: 'Ribbit!' },
+  { name: 'Lion', id: 'lion', emoji: '🦁', color: '#EAB308', url: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_3ef8735df3.mp3?filename=lion-roar-113974.mp3', sound: 'Roar!' },
+  { name: 'Duck', id: 'duck', emoji: '🦆', color: '#06B6D4', url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_73d43c224b.mp3?filename=duck-quack-14494.mp3', sound: 'Quack!' },
+  { name: 'Pig', id: 'pig', emoji: '🐷', color: '#F472B6', url: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_f5cd827d05.mp3?filename=pig-oink-113945.mp3', sound: 'Oink!' },
+  { name: 'Horse', id: 'horse', emoji: '🐴', color: '#A16207', url: 'https://cdn.pixabay.com/download/audio/2021/08/09/audio_d19a32c2c0.mp3?filename=horse-whinny-115939.mp3', sound: 'Neigh!' },
+  { name: 'Sheep', id: 'sheep', emoji: '🐑', color: '#9CA3AF', url: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_034d61c6b1.mp3?filename=sheep-baa-114003.mp3', sound: 'Baa!' },
+  { name: 'Elephant', id: 'elephant', emoji: '🐘', color: '#64748B', url: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_06d87cd7a9.mp3?filename=elephant-trumpets-113977.mp3', sound: 'Toot!' },
+  { name: 'Monkey', id: 'monkey', emoji: '🐵', color: '#D97706', url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_dc3e5cf7bb.mp3?filename=monkey-screeches-14498.mp3', sound: 'Ooh ooh!' },
 ];
 
 // Bubble colors
