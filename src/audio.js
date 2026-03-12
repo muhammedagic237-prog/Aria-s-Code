@@ -7,11 +7,23 @@ function getAudioContext() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
+  // Try to resume if it's suspended (modern browser autoplay policy)
   if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
+    audioCtx.resume().catch(() => {
+      console.warn("AudioContext couldn't resume yet");
+    });
   }
   return audioCtx;
 }
+
+// Ensure the context starts on the first interaction globally
+const initAudio = () => {
+  getAudioContext();
+  window.removeEventListener('touchstart', initAudio);
+  window.removeEventListener('click', initAudio);
+};
+window.addEventListener('touchstart', initAudio, { once: true });
+window.addEventListener('click', initAudio, { once: true });
 
 // Play a musical note by frequency
 export function playNote(frequency, duration = 0.5, type = 'triangle') {
@@ -72,14 +84,18 @@ const animalSounds = new Howl({
 });
 
 export function playAnimalSound(animalId, url) {
-  // If we already have a howl for this, play it. Otherwise, create one and play.
   // To avoid overlapping a bunch of animal sounds, we can stop existing ones
-  window.__currentAnimalHowl?.stop();
+  if (window.__currentAnimalHowl) {
+    window.__currentAnimalHowl.stop();
+  }
 
+  // Use Web Audio API backend (html5: false) for short sound effects so they 
+  // preload and play instantly without streaming buffering delays on mobile.
   const sound = new Howl({
     src: [url],
-    html5: true, // Force HTML5 Audio to avoid CORS issues
+    html5: false,
     volume: 1.0,
+    preload: true,
   });
 
   window.__currentAnimalHowl = sound;
