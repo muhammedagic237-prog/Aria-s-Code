@@ -90,43 +90,54 @@ export function playAnimalSound(animal) {
 
   switch (animal) {
     case 'cow':
-      createSound(150, 120, 0.8, 'sawtooth', 1);
+      createSound(120, 80, 1.5, 'square', 1);
       break;
     case 'cat':
-      createSound(600, 400, 0.5, 'sine', 1);
+      createSound(600, 400, 1.5, 'sine', 1);
       break;
     case 'dog':
-      createSound(400, 300, 0.15, 'square', 3, 0.1);
+      createSound(400, 300, 0.2, 'square', 5, 0.125);
       break;
     case 'bird':
-      createSound(1200, 1800, 0.15, 'sine', 4, 0.08);
+      createSound(1200, 1800, 0.166, 'sine', 6, 0.1);
       break;
     case 'frog':
-      createSound(200, 600, 0.1, 'square', 5, 0.06);
+      createSound(200, 600, 0.22, 'square', 5, 0.1);
       break;
     case 'lion':
-      createSound(120, 80, 1.0, 'sawtooth', 1);
+      createSound(100, 50, 1.5, 'sawtooth', 1);
       break;
     case 'duck':
-      createSound(500, 400, 0.2, 'square', 3, 0.15);
+      createSound(500, 400, 0.3, 'square', 4, 0.1);
       break;
     case 'pig':
-      createSound(300, 500, 0.3, 'sawtooth', 2, 0.15);
+      createSound(300, 500, 0.4, 'sawtooth', 3, 0.15);
       break;
     case 'horse':
-      createSound(200, 350, 0.3, 'sawtooth', 2, 0.2);
+      createSound(200, 350, 0.4, 'sawtooth', 3, 0.15);
       break;
     case 'sheep':
-      createSound(350, 300, 0.4, 'sawtooth', 2, 0.15);
+      createSound(350, 300, 0.6, 'sawtooth', 2, 0.3);
       break;
     case 'elephant':
-      createSound(200, 500, 0.6, 'sawtooth', 1);
+      createSound(200, 500, 1.5, 'sawtooth', 1);
       break;
     case 'monkey':
-      createSound(600, 1000, 0.15, 'sine', 4, 0.1);
+      createSound(600, 1000, 0.22, 'sine', 5, 0.1);
       break;
     default:
-      playNote(440, 0.3);
+      playNote(440, 1.5);
+  }
+}
+
+// Speak a number aloud using TTS
+export function speakNumber(num) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(num.toString());
+    utterance.rate = 0.9;
+    utterance.pitch = 1.2;
+    window.speechSynthesis.speak(utterance);
   }
 }
 

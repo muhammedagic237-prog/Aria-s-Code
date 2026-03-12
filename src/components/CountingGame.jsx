@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion'; // eslint-disable-line no-unused-vars
-import { playCountTick, playSuccess, COUNT_EMOJIS } from '../audio';
+import { playCountTick, playSuccess, speakNumber, COUNT_EMOJIS } from '../audio';
 
 function generateRound() {
   const target = 3 + Math.floor(Math.random() * 5); // 3–7 objects
@@ -24,6 +24,7 @@ export default function CountingGame({ onBack }) {
     const newCount = count + 1;
     setCount(newCount);
     playCountTick(newCount);
+    speakNumber(newCount);
     if (navigator.vibrate) navigator.vibrate(20);
 
     setRound(prev => ({

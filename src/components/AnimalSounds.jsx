@@ -14,7 +14,7 @@ export default function AnimalSounds({ onBack }) {
     // Haptic feedback
     if (navigator.vibrate) navigator.vibrate(30);
 
-    setTimeout(() => setPlaying(null), 600);
+    setTimeout(() => setPlaying(null), 1500);
   };
 
   return (
