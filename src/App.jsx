@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from 'framer-motion'; // eslint-disable-line 
 
 import AnimatedReels from './components/AnimatedReels';
 import GamesHub from './components/GamesHub';
-import AnimalSounds from './components/AnimalSounds';
 import MusicKeyboard from './components/MusicKeyboard';
 import ColorBubbles from './components/ColorBubbles';
 import CountingGame from './components/CountingGame';
@@ -51,7 +50,7 @@ function SplashScreen({ onFinish }) {
 function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState('reels'); // 'reels' | 'games'
-  const [activeGame, setActiveGame] = useState(null); // null | 'animals' | 'piano' | 'bubbles' | 'counting'
+  const [activeGame, setActiveGame] = useState(null); // null | 'piano' | 'bubbles' | 'counting'
 
   const handleSelectGame = (gameId) => {
     setActiveGame(gameId);
@@ -63,8 +62,6 @@ function App() {
 
   const renderGameContent = () => {
     switch (activeGame) {
-      case 'animals':
-        return <AnimalSounds onBack={handleBackToHub} />;
       case 'piano':
         return <MusicKeyboard onBack={handleBackToHub} />;
       case 'bubbles':

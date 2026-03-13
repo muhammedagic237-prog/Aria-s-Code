@@ -2,10 +2,9 @@ import React from 'react';
 import { motion } from 'framer-motion'; // eslint-disable-line no-unused-vars
 
 const GAMES = [
-  { id: 'animals', icon: '🐾', label: 'Animals', bg: 'linear-gradient(135deg, #7C3AED, #A855F7)' },
   { id: 'piano', icon: '🎹', label: 'Music', bg: 'linear-gradient(135deg, #EC4899, #F472B6)' },
   { id: 'bubbles', icon: '🫧', label: 'Bubbles', bg: 'linear-gradient(135deg, #3B82F6, #60A5FA)' },
-  { id: 'counting', icon: '🔢', label: 'Counting', bg: 'linear-gradient(135deg, #F97316, #FBBF24)' },
+  { id: 'counting', icon: '🔢', label: 'Numbers', bg: 'linear-gradient(135deg, #F97316, #FBBF24)' },
 ];
 
 export default function GamesHub({ onSelectGame }) {
