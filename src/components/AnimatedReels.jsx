@@ -99,68 +99,55 @@ function VideoPlayer({ src, isActive }) {
 
 export default function AnimatedReels() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const containerRef = useRef(null);
 
-  // We only track drag offset visually during the swipe
-  const handleDragEnd = (event, info) => {
-    const offset = info.offset.y;
-    const velocity = info.velocity.y;
-    
-    // Make the swipe extremely sensitive. If they flick it lightly, or drag it 1/4 of the screen.
-    const swipeThreshold = window.innerHeight / 4;
-    
-    // Swipe down (finger moves DOWN -> positive offset) -> Go to Previous video
-    if (offset > swipeThreshold || velocity > 300) {
-      if (currentIndex > 0) {
-        setCurrentIndex(prev => prev - 1);
-      }
-    } 
-    // Swipe up (finger moves UP -> negative offset) -> Go to Next video
-    else if (offset < -swipeThreshold || velocity < -300) {
-      if (currentIndex < REELS.length - 1) {
-        setCurrentIndex(prev => prev + 1);
-      }
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const index = parseInt(entry.target.getAttribute('data-index'), 10);
+          setCurrentIndex(index);
+        }
+      });
+    }, {
+      threshold: 0.6 // Trigger when at least 60% of the video is visible
+    });
+
+    if (containerRef.current) {
+      const slides = containerRef.current.querySelectorAll('.reel-slide-snap');
+      slides.forEach(slide => observer.observe(slide));
     }
-  };
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <div
-      className="reels-container"
-      style={{ 
-        background: '#000',
-        overflow: 'hidden',
-        position: 'fixed', // Lock to viewport
-        top: 0, left: 0, right: 0, bottom: 0,
-        width: '100vw',
-        height: '100vh',
-        touchAction: 'none', // Prevent iOS Safari from trying to scroll the page naturally
-        overscrollBehavior: 'none', // Block iOS swipe-to-go-back history navigation
-      }}
-    >
-      <motion.div
-        drag="y"
-        dragDirectionLock
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={0.2}
-        onDragEnd={handleDragEnd}
-        animate={{ 
-          y: `-${currentIndex * 100}%`
-        }}
-        transition={{ type: 'spring', stiffness: 400, damping: 40 }} // Snappier spring
+    <>
+      <div
+        ref={containerRef}
+        className="reels-container"
         style={{ 
-          width: '100%', 
-          height: `${REELS.length * 100}%`,
-          display: 'flex',
-          flexDirection: 'column',
-          cursor: 'grab'
+          background: '#000',
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          width: '100vw',
+          height: '100vh',
+          overflowY: 'scroll',
+          overflowX: 'hidden',
+          scrollSnapType: 'y mandatory',
+          WebkitOverflowScrolling: 'touch'
         }}
-        whileTap={{ cursor: 'grabbing' }}
       >
         {REELS.map((reel, index) => (
           <div 
             key={reel.id} 
+            className="reel-slide-snap"
+            data-index={index}
             style={{ 
               width: '100%', 
-              height: `${100 / REELS.length}%`,
+              height: '100vh',
+              scrollSnapAlign: 'start',
+              scrollSnapStop: 'always',
               position: 'relative'
             }}
           >
@@ -179,11 +166,11 @@ export default function AnimatedReels() {
             )}
           </div>
         ))}
-      </motion.div>
+      </div>
 
-      {/* Page dots */}
+      {/* Page dots fixed above the scrolling container */}
       <div style={{
-        position: 'absolute',
+        position: 'fixed',
         right: 12,
         top: '50%',
         transform: 'translateY(-50%)',
@@ -206,6 +193,6 @@ export default function AnimatedReels() {
           />
         ))}
       </div>
-    </div>
+    </>
   );
 }
