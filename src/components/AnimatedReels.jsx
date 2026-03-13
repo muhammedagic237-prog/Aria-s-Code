@@ -99,82 +99,55 @@ function VideoPlayer({ src, isActive }) {
 
 export default function AnimatedReels() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const touchStartY = useRef(0);
-  const touchCurrentY = useRef(0);
-  const isSwiping = useRef(false);
-  const [dragOffset, setDragOffset] = useState(0);
 
-  // Preload all videos transparently
-  useEffect(() => {
-    REELS.forEach(reel => {
-      const img = new Image();
-      img.src = reel.src; // Hint browser to fetch
-    });
-  }, []);
-
-  const handleTouchStart = useCallback((e) => {
-    touchStartY.current = e.touches[0].clientY;
-    touchCurrentY.current = e.touches[0].clientY;
-    isSwiping.current = true;
-    setDragOffset(0);
-  }, []);
-
-  const handleTouchMove = useCallback((e) => {
-    if (!isSwiping.current) return;
-    touchCurrentY.current = e.touches[0].clientY;
-    const diff = touchCurrentY.current - touchStartY.current;
+  // We only track drag offset visually during the swipe
+  const handleDragEnd = (event, info) => {
+    const offset = info.offset.y;
+    const velocity = info.velocity.y;
     
-    // Add resistance at the absolute top and bottom edges
-    if (currentIndex === 0 && diff > 0) {
-      setDragOffset(diff * 0.2); // Slower drag at top
-    } else if (currentIndex === REELS.length - 1 && diff < 0) {
-      setDragOffset(diff * 0.2); // Slower drag at bottom
-    } else {
-      setDragOffset(diff);
-    }
-  }, [currentIndex]);
-
-  const handleTouchEnd = useCallback((e) => {
-    if (!isSwiping.current) return;
-    isSwiping.current = false;
-    
-    const diff = touchCurrentY.current - touchStartY.current;
-    
-    if (Math.abs(diff) > 80) {
-      if (diff > 0 && currentIndex > 0) {
+    // Swipe down (previous video)
+    if (offset > 100 || velocity > 500) {
+      if (currentIndex > 0) {
         setCurrentIndex(prev => prev - 1);
-      } else if (diff < 0 && currentIndex < REELS.length - 1) {
+      }
+    } 
+    // Swipe up (next video)
+    else if (offset < -100 || velocity < -500) {
+      if (currentIndex < REELS.length - 1) {
         setCurrentIndex(prev => prev + 1);
       }
     }
-    
-    // Snap back
-    setDragOffset(0);
-  }, [currentIndex]);
+  };
 
   return (
     <div
       className="reels-container"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
       style={{ 
         background: '#000',
         overflow: 'hidden',
-        position: 'relative'
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        touchAction: 'none' // Prevent iOS Safari from trying to scroll the page naturally
       }}
     >
       <motion.div
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={0.2}
+        onDragEnd={handleDragEnd}
         animate={{ 
-          y: `calc(${-currentIndex * 100}% + ${dragOffset}px)`
+          y: `-${currentIndex * 100}%`
         }}
-        transition={isSwiping.current ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         style={{ 
           width: '100%', 
           height: `${REELS.length * 100}%`,
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          cursor: 'grab'
         }}
+        whileTap={{ cursor: 'grabbing' }}
       >
         {REELS.map((reel, index) => (
           <div 
