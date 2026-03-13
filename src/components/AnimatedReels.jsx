@@ -65,6 +65,7 @@ function VideoPlayer({ src, isActive }) {
             ref={videoRef}
             src={src}
             loop
+            preload="auto"
             playsInline
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             onError={() => setHasError(true)}
@@ -99,53 +100,107 @@ function VideoPlayer({ src, isActive }) {
 export default function AnimatedReels() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const touchStartY = useRef(0);
+  const touchCurrentY = useRef(0);
   const isSwiping = useRef(false);
+  const [dragOffset, setDragOffset] = useState(0);
+
+  // Preload all videos transparently
+  useEffect(() => {
+    REELS.forEach(reel => {
+      const img = new Image();
+      img.src = reel.src; // Hint browser to fetch
+    });
+  }, []);
 
   const handleTouchStart = useCallback((e) => {
     touchStartY.current = e.touches[0].clientY;
-    isSwiping.current = false;
+    touchCurrentY.current = e.touches[0].clientY;
+    isSwiping.current = true;
+    setDragOffset(0);
   }, []);
 
-  const handleTouchEnd = useCallback((e) => {
-    const diff = touchStartY.current - e.changedTouches[0].clientY;
-    if (Math.abs(diff) > 60) {
-      isSwiping.current = true;
-      if (diff > 0 && currentIndex < REELS.length - 1) {
-        setCurrentIndex(prev => prev + 1);
-      } else if (diff < 0 && currentIndex > 0) {
-        setCurrentIndex(prev => prev - 1);
-      }
+  const handleTouchMove = useCallback((e) => {
+    if (!isSwiping.current) return;
+    touchCurrentY.current = e.touches[0].clientY;
+    const diff = touchCurrentY.current - touchStartY.current;
+    
+    // Add resistance at the absolute top and bottom edges
+    if (currentIndex === 0 && diff > 0) {
+      setDragOffset(diff * 0.2); // Slower drag at top
+    } else if (currentIndex === REELS.length - 1 && diff < 0) {
+      setDragOffset(diff * 0.2); // Slower drag at bottom
+    } else {
+      setDragOffset(diff);
     }
   }, [currentIndex]);
 
-  const currentReel = REELS[currentIndex];
+  const handleTouchEnd = useCallback((e) => {
+    if (!isSwiping.current) return;
+    isSwiping.current = false;
+    
+    const diff = touchCurrentY.current - touchStartY.current;
+    
+    if (Math.abs(diff) > 80) {
+      if (diff > 0 && currentIndex > 0) {
+        setCurrentIndex(prev => prev - 1);
+      } else if (diff < 0 && currentIndex < REELS.length - 1) {
+        setCurrentIndex(prev => prev + 1);
+      }
+    }
+    
+    // Snap back
+    setDragOffset(0);
+  }, [currentIndex]);
 
   return (
     <div
       className="reels-container"
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      style={{ background: '#000' }}
+      style={{ 
+        background: '#000',
+        overflow: 'hidden',
+        position: 'relative'
+      }}
     >
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentReel.id}
-          className="reel-slide"
-          initial={{ y: '100%', opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: '-100%', opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-          style={{ padding: 0 }} // Remove default padding for full bleed video
-        >
-          <VideoPlayer src={currentReel.src} isActive={true} />
-
-          {currentIndex < REELS.length - 1 && (
-            <span className="swipe-hint" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-              ⬆ Swipe Up
-            </span>
-          )}
-        </motion.div>
-      </AnimatePresence>
+      <motion.div
+        animate={{ 
+          y: `calc(${-currentIndex * 100}% + ${dragOffset}px)`
+        }}
+        transition={isSwiping.current ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30 }}
+        style={{ 
+          width: '100%', 
+          height: `${REELS.length * 100}%`,
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        {REELS.map((reel, index) => (
+          <div 
+            key={reel.id} 
+            style={{ 
+              width: '100%', 
+              height: `${100 / REELS.length}%`,
+              position: 'relative'
+            }}
+          >
+            <VideoPlayer src={reel.src} isActive={currentIndex === index} />
+            
+            {/* Contextual hints */}
+            {index < REELS.length - 1 && (
+              <span className="swipe-hint" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)', pointerEvents: 'none' }}>
+                ⬆ Swipe Up
+              </span>
+            )}
+            {index > 0 && (
+              <span className="swipe-hint" style={{ top: '80px', bottom: 'auto', textShadow: '0 2px 4px rgba(0,0,0,0.8)', pointerEvents: 'none' }}>
+                ⬇ Swipe Down
+              </span>
+            )}
+          </div>
+        ))}
+      </motion.div>
 
       {/* Page dots */}
       <div style={{
@@ -157,6 +212,7 @@ export default function AnimatedReels() {
         flexDirection: 'column',
         gap: 6,
         zIndex: 10,
+        pointerEvents: 'none'
       }}>
         {REELS.map((_, i) => (
           <div
