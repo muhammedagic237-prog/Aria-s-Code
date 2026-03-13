@@ -105,14 +105,17 @@ export default function AnimatedReels() {
     const offset = info.offset.y;
     const velocity = info.velocity.y;
     
-    // Swipe down (previous video)
-    if (offset > 100 || velocity > 500) {
+    // Make the swipe extremely sensitive. If they flick it lightly, or drag it 1/4 of the screen.
+    const swipeThreshold = window.innerHeight / 4;
+    
+    // Swipe down (finger moves DOWN -> positive offset) -> Go to Previous video
+    if (offset > swipeThreshold || velocity > 300) {
       if (currentIndex > 0) {
         setCurrentIndex(prev => prev - 1);
       }
     } 
-    // Swipe up (next video)
-    else if (offset < -100 || velocity < -500) {
+    // Swipe up (finger moves UP -> negative offset) -> Go to Next video
+    else if (offset < -swipeThreshold || velocity < -300) {
       if (currentIndex < REELS.length - 1) {
         setCurrentIndex(prev => prev + 1);
       }
@@ -125,21 +128,24 @@ export default function AnimatedReels() {
       style={{ 
         background: '#000',
         overflow: 'hidden',
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        touchAction: 'none' // Prevent iOS Safari from trying to scroll the page naturally
+        position: 'fixed', // Lock to viewport
+        top: 0, left: 0, right: 0, bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        touchAction: 'none', // Prevent iOS Safari from trying to scroll the page naturally
+        overscrollBehavior: 'none', // Block iOS swipe-to-go-back history navigation
       }}
     >
       <motion.div
         drag="y"
+        dragDirectionLock
         dragConstraints={{ top: 0, bottom: 0 }}
         dragElastic={0.2}
         onDragEnd={handleDragEnd}
         animate={{ 
           y: `-${currentIndex * 100}%`
         }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 40 }} // Snappier spring
         style={{ 
           width: '100%', 
           height: `${REELS.length * 100}%`,
