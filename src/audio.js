@@ -1,5 +1,4 @@
-// ===== Audio Engine (Web Audio API & Howler) =====
-import { Howl } from 'howler';
+// ===== Audio Engine (Web Audio API & Synthesizer) =====
 
 let audioCtx = null;
 
