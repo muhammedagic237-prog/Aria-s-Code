@@ -18,15 +18,15 @@ function VideoPlayer({ src, isActive }) {
     
     if (isActive) {
       videoRef.current.currentTime = 0;
-      let playPromise = videoRef.current.play();
+      // Force play and explicitly catch to prevent unhandled promise rejections, 
+      // but do not let Safari silently swallow it.
+      const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch(err => {
-          console.warn('Video autoplay prevented or file missing:', err);
+          console.warn('Autoplay blocked:', err);
+          // Only show interaction overlay if it's explicitly NotAllowedError (first play)
           if (err.name === 'NotAllowedError') {
-             // iOS Safari blocked autoplay because the user didn't tap the video yet
              setRequiresInteraction(true);
-          } else {
-             setHasError(true);
           }
         });
       }
@@ -34,13 +34,6 @@ function VideoPlayer({ src, isActive }) {
       videoRef.current.pause();
     }
   }, [isActive, src]);
-
-  const handleManualPlay = () => {
-    if (videoRef.current) {
-      videoRef.current.play();
-      setRequiresInteraction(false);
-    }
-  };
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#000' }}>
