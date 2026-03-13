@@ -66,7 +66,8 @@ function VideoPlayer({ src, isActive }) {
             src={src}
             loop
             preload="auto"
-            playsInline
+            playsInline={true}
+            WebkitPlaysInline={true}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             onError={() => setHasError(true)}
           />
