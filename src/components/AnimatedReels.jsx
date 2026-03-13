@@ -11,20 +11,36 @@ const REELS = Array.from({ length: REELS_COUNT }, (_, i) => ({
 function VideoPlayer({ src, isActive }) {
   const videoRef = useRef(null);
   const [hasError, setHasError] = useState(false);
+  const [requiresInteraction, setRequiresInteraction] = useState(false);
 
   useEffect(() => {
     if (!videoRef.current) return;
     
     if (isActive) {
       videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(err => {
-        console.warn('Video autoplay prevented or file missing:', err);
-        setHasError(true);
-      });
+      let playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          console.warn('Video autoplay prevented or file missing:', err);
+          if (err.name === 'NotAllowedError') {
+             // iOS Safari blocked autoplay because the user didn't tap the video yet
+             setRequiresInteraction(true);
+          } else {
+             setHasError(true);
+          }
+        });
+      }
     } else {
       videoRef.current.pause();
     }
   }, [isActive, src]);
+
+  const handleManualPlay = () => {
+    if (videoRef.current) {
+      videoRef.current.play();
+      setRequiresInteraction(false);
+    }
+  };
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#000' }}>
@@ -44,14 +60,37 @@ function VideoPlayer({ src, isActive }) {
           </p>
         </div>
       ) : (
-        <video
-          ref={videoRef}
-          src={src}
-          loop
-          playsInline
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          onError={() => setHasError(true)}
-        />
+        <>
+          <video
+            ref={videoRef}
+            src={src}
+            loop
+            playsInline
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            onError={() => setHasError(true)}
+          />
+          {requiresInteraction && (
+            <div 
+              onClick={handleManualPlay}
+              style={{
+                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                backgroundColor: 'rgba(0,0,0,0.4)',
+                zIndex: 20
+              }}
+            >
+              <div style={{
+                width: '100px', height: '100px', borderRadius: '50%',
+                backgroundColor: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(8px)',
+                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                fontSize: '3rem', cursor: 'pointer', boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                paddingLeft: '10px' // Center the play triangle visually
+              }}>
+                ▶️
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
