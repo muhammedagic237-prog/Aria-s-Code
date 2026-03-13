@@ -11,23 +11,19 @@ const REELS = Array.from({ length: REELS_COUNT }, (_, i) => ({
 function VideoPlayer({ src, isActive }) {
   const videoRef = useRef(null);
   const [hasError, setHasError] = useState(false);
-  const [requiresInteraction, setRequiresInteraction] = useState(false);
+  // Android allows seamless autoplay ONLY if the video is strictly muted initially
+  const [isMuted, setIsMuted] = useState(true);
 
   useEffect(() => {
     if (!videoRef.current) return;
     
     if (isActive) {
       videoRef.current.currentTime = 0;
-      // Force play and explicitly catch to prevent unhandled promise rejections, 
-      // but do not let Safari silently swallow it.
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch(err => {
           console.warn('Autoplay blocked:', err);
-          // Only show interaction overlay if it's explicitly NotAllowedError (first play)
-          if (err.name === 'NotAllowedError') {
-             setRequiresInteraction(true);
-          }
+          setHasError(true);
         });
       }
     } else {
@@ -35,10 +31,11 @@ function VideoPlayer({ src, isActive }) {
     }
   }, [isActive, src]);
 
-  const handleManualPlay = () => {
+  // The very first tap unmutes the video player permanently for this instance
+  const handleUnmute = () => {
     if (videoRef.current) {
+      setIsMuted(false);
       videoRef.current.play();
-      setRequiresInteraction(false);
     }
   };
 
@@ -68,12 +65,18 @@ function VideoPlayer({ src, isActive }) {
             preload="auto"
             playsInline={true}
             WebkitPlaysInline={true}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            muted={isMuted} // Muted videos bypass Android's strict autoplay limits
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'cover',
+              pointerEvents: 'none' // Crucial: Stop Android Chrome from capturing the swipe over the video
+            }}
             onError={() => setHasError(true)}
           />
-          {requiresInteraction && (
+          {isMuted && (
             <div 
-              onClick={handleManualPlay}
+              onClick={handleUnmute}
               style={{
                 position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
@@ -86,7 +89,7 @@ function VideoPlayer({ src, isActive }) {
                 backgroundColor: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(8px)',
                 display: 'flex', justifyContent: 'center', alignItems: 'center',
                 fontSize: '3rem', cursor: 'pointer', boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-                paddingLeft: '10px' // Center the play triangle visually
+                paddingLeft: '10px'
               }}>
                 ▶️
               </div>
