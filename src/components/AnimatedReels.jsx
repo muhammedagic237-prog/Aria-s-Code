@@ -35,6 +35,13 @@ function VideoPlayer({ src, isActive }) {
     }
   }, [isActive, src]);
 
+  const handleManualPlay = () => {
+    if (videoRef.current) {
+      videoRef.current.play();
+      setRequiresInteraction(false);
+    }
+  };
+
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#000' }}>
       {hasError ? (
