@@ -9,7 +9,7 @@ export default function AnimalSounds({ onBack }) {
   const handleAnimalTap = (animal) => {
     setPlaying(animal.id);
     setLastSound(animal.sound);
-    playAnimalSound(animal.id, animal.url);
+    playAnimalSound(animal.id);
 
     // Haptic feedback
     if (navigator.vibrate) navigator.vibrate(30);
