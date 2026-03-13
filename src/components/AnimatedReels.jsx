@@ -1,118 +1,58 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Animated reel scenes — each is a full-screen animated "card"
-const REELS = [
-  {
-    id: 'welcome',
-    bg: 'bg-gradient-purple',
-    emoji: '💜',
-    title: "Hi Aria!",
-    subtitle: "Swipe up to play!",
-    particles: ['✨', '🌟', '⭐', '💫'],
-  },
-  {
-    id: 'counting',
-    bg: 'bg-gradient-blue',
-    emoji: '🔢',
-    title: "1, 2, 3!",
-    subtitle: "Let's count together!",
-    items: ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣'],
-  },
-  {
-    id: 'animals',
-    bg: 'bg-gradient-green',
-    emoji: '🦁',
-    title: "Animals!",
-    subtitle: "Can you roar like a lion?",
-    items: ['🐶', '🐱', '🐮', '🐷', '🐸'],
-  },
-  {
-    id: 'colors',
-    bg: 'bg-gradient-pink',
-    emoji: '🌈',
-    title: "Colors!",
-    subtitle: "So many colors!",
-    items: ['🔴', '🟠', '🟡', '🟢', '🔵', '🟣'],
-  },
-  {
-    id: 'shapes',
-    bg: 'bg-gradient-orange',
-    emoji: '🔷',
-    title: "Shapes!",
-    subtitle: "Circle, square, triangle!",
-    items: ['⬛', '🔺', '⭕', '💠', '🔶'],
-  },
-  {
-    id: 'fruits',
-    bg: 'bg-gradient-red',
-    emoji: '🍎',
-    title: "Yummy Fruits!",
-    subtitle: "What's your favorite?",
-    items: ['🍎', '🍊', '🍋', '🍇', '🍓', '🍌'],
-  },
-  {
-    id: 'space',
-    bg: 'bg-gradient-teal',
-    emoji: '🚀',
-    title: "To The Stars!",
-    subtitle: "3... 2... 1... Blast off!",
-    items: ['🌙', '⭐', '🪐', '☀️', '🌍'],
-  },
-  {
-    id: 'music',
-    bg: 'bg-gradient-yellow',
-    emoji: '🎵',
-    title: "Music Time!",
-    subtitle: "Let's make some noise!",
-    items: ['🎹', '🥁', '🎸', '🎺', '🎻'],
-  },
-];
+// We expect the user to drop video1.mov, video2.mov, etc. into public/reels/
+const REELS_COUNT = 5; 
+const REELS = Array.from({ length: REELS_COUNT }, (_, i) => ({
+  id: `reel-${i + 1}`,
+  src: `/reels/video${i + 1}.mov`
+}));
 
-function FloatingItems({ items }) {
-  if (!items) return null;
-  return (
-    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '24px' }}>
-      {items.map((item, i) => (
-        <motion.span
-          key={i}
-          initial={{ scale: 0, rotate: -20 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ delay: 0.3 + i * 0.1, type: 'spring', stiffness: 200 }}
-          style={{ fontSize: 'clamp(2rem, 8vw, 3.5rem)', filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.2))' }}
-        >
-          {item}
-        </motion.span>
-      ))}
-    </div>
-  );
-}
+function VideoPlayer({ src, isActive }) {
+  const videoRef = useRef(null);
+  const [hasError, setHasError] = useState(false);
 
-function Particles({ items }) {
-  if (!items) return null;
+  useEffect(() => {
+    if (!videoRef.current) return;
+    
+    if (isActive) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(err => {
+        console.warn('Video autoplay prevented or file missing:', err);
+        setHasError(true);
+      });
+    } else {
+      videoRef.current.pause();
+    }
+  }, [isActive, src]);
+
   return (
-    <div className="particles">
-      {items.map((p, i) => (
-        <motion.span
-          key={i}
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity: [0.2, 0.5, 0.2],
-            y: [0, -40, 0],
-            x: [0, (i % 2 ? 15 : -15), 0],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{ duration: 3 + i, repeat: Infinity, delay: i * 0.5 }}
-          style={{
-            position: 'absolute',
-            fontSize: '1.5rem',
-            top: `${20 + i * 18}%`,
-            left: `${10 + i * 20}%`,
-          }}
-        >
-          {p}
-        </motion.span>
-      ))}
+    <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#000' }}>
+      {hasError ? (
+        <div style={{ 
+          color: 'white', 
+          textAlign: 'center', 
+          padding: '2rem',
+          position: 'absolute',
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}>
+          <h3>⚠️ Video Missing</h3>
+          <p style={{ opacity: 0.7, fontSize: '1rem', marginTop: '1rem' }}>
+            Please drop your screen-recorded video into the project folder:<br/><br/>
+            <code>AriasCode/public/reels/{src.split('/').pop()}</code>
+          </p>
+        </div>
+      ) : (
+        <video
+          ref={videoRef}
+          src={src}
+          loop
+          playsInline
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          onError={() => setHasError(true)}
+        />
+      )}
     </div>
   );
 }
@@ -139,55 +79,31 @@ export default function AnimatedReels() {
     }
   }, [currentIndex]);
 
-  const reel = REELS[currentIndex];
+  const currentReel = REELS[currentIndex];
 
   return (
     <div
       className="reels-container"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      style={{ background: '#000' }}
     >
       <AnimatePresence mode="wait">
         <motion.div
-          key={reel.id}
-          className={`reel-slide ${reel.bg}`}
+          key={currentReel.id}
+          className="reel-slide"
           initial={{ y: '100%', opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '-100%', opacity: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+          style={{ padding: 0 }} // Remove default padding for full bleed video
         >
-          <Particles items={reel.particles} />
-
-          <motion.div
-            className="reel-emoji"
-            initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.15, type: 'spring', stiffness: 180 }}
-          >
-            {reel.emoji}
-          </motion.div>
-
-          <motion.h1
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.25 }}
-          >
-            {reel.title}
-          </motion.h1>
-
-          <motion.p
-            className="reel-subtitle"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 0.8 }}
-            transition={{ delay: 0.35 }}
-          >
-            {reel.subtitle}
-          </motion.p>
-
-          <FloatingItems items={reel.items} />
+          <VideoPlayer src={currentReel.src} isActive={true} />
 
           {currentIndex < REELS.length - 1 && (
-            <span className="swipe-hint">⬆ Swipe Up</span>
+            <span className="swipe-hint" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+              ⬆ Swipe Up
+            </span>
           )}
         </motion.div>
       </AnimatePresence>
@@ -207,11 +123,11 @@ export default function AnimatedReels() {
           <div
             key={i}
             style={{
-              width: 6,
-              height: i === currentIndex ? 20 : 6,
-              borderRadius: 3,
-              background: i === currentIndex ? '#fff' : 'rgba(255,255,255,0.3)',
-              transition: 'all 0.3s ease',
+               width: 6,
+               height: i === currentIndex ? 20 : 6,
+               borderRadius: 3,
+               background: i === currentIndex ? '#fff' : 'rgba(255,255,255,0.3)',
+               transition: 'all 0.3s ease',
             }}
           />
         ))}
