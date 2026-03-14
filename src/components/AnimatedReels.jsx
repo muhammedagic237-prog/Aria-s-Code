@@ -8,15 +8,16 @@ const REELS = Array.from({ length: REELS_COUNT }, (_, i) => ({
   src: `/reels/video${i + 1}.mov`
 }));
 
-function VideoPlayer({ src, isActive }) {
+function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
   const videoRef = useRef(null);
   const [hasError, setHasError] = useState(false);
-  // Android allows seamless autoplay ONLY if the video is strictly muted initially
-  const [isMuted, setIsMuted] = useState(true);
 
   useEffect(() => {
     if (!videoRef.current) return;
     
+    // Explicitly update the native DOM element's muted property
+    videoRef.current.muted = isGlobalMuted;
+
     if (isActive) {
       videoRef.current.currentTime = 0;
       const playPromise = videoRef.current.play();
@@ -29,12 +30,13 @@ function VideoPlayer({ src, isActive }) {
     } else {
       videoRef.current.pause();
     }
-  }, [isActive, src]);
+  }, [isActive, src, isGlobalMuted]);
 
-  // The very first tap unmutes the video player permanently for this instance
+  // The very first tap unmutes the video player permanently for all instances globaly
   const handleUnmute = () => {
     if (videoRef.current) {
-      setIsMuted(false);
+      onUnmute();
+      videoRef.current.muted = false;
       videoRef.current.play();
     }
   };
@@ -65,7 +67,7 @@ function VideoPlayer({ src, isActive }) {
             preload="auto"
             playsInline={true}
             WebkitPlaysInline={true}
-            muted={isMuted} // Muted videos bypass Android's strict autoplay limits
+            muted={isGlobalMuted} // Muted videos bypass Android's strict autoplay limits
             style={{ 
               width: '100%', 
               height: '100%', 
@@ -74,7 +76,7 @@ function VideoPlayer({ src, isActive }) {
             }}
             onError={() => setHasError(true)}
           />
-          {isMuted && (
+          {isGlobalMuted && isActive && (
             <div 
               onClick={handleUnmute}
               style={{
@@ -103,6 +105,7 @@ function VideoPlayer({ src, isActive }) {
 
 export default function AnimatedReels() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isGlobalMuted, setIsGlobalMuted] = useState(true);
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -155,7 +158,12 @@ export default function AnimatedReels() {
               position: 'relative'
             }}
           >
-            <VideoPlayer src={reel.src} isActive={currentIndex === index} />
+            <VideoPlayer 
+              src={reel.src} 
+              isActive={currentIndex === index} 
+              isGlobalMuted={isGlobalMuted}
+              onUnmute={() => setIsGlobalMuted(false)}
+            />
             
             {/* Contextual hints */}
             {index < REELS.length - 1 && (
