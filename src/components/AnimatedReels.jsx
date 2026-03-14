@@ -11,6 +11,7 @@ const REELS = Array.from({ length: REELS_COUNT }, (_, i) => ({
 function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
   const videoRef = useRef(null);
   const [hasError, setHasError] = useState(false);
+  const [needsManualPlay, setNeedsManualPlay] = useState(false);
 
   useEffect(() => {
     if (!videoRef.current) return;
@@ -20,11 +21,16 @@ function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
 
     if (isActive) {
       videoRef.current.currentTime = 0;
+      setNeedsManualPlay(false);
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
         playPromise.catch(err => {
           console.warn('Autoplay blocked:', err);
-          setHasError(true);
+          if (err.name === 'NotAllowedError') {
+             setNeedsManualPlay(true);
+          } else {
+             setHasError(true);
+          }
         });
       }
     } else {
@@ -37,7 +43,11 @@ function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
     if (videoRef.current) {
       onUnmute();
       videoRef.current.muted = false;
-      videoRef.current.play();
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => console.warn('Manual play blocked', err));
+      }
+      setNeedsManualPlay(false);
     }
   };
 
@@ -76,7 +86,7 @@ function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
             }}
             onError={() => setHasError(true)}
           />
-          {isGlobalMuted && isActive && (
+          {((isGlobalMuted && isActive) || needsManualPlay) && (
             <div 
               onClick={handleUnmute}
               style={{
