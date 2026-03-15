@@ -116,108 +116,113 @@ function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
 export default function AnimatedReels() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isGlobalMuted, setIsGlobalMuted] = useState(true);
-  const containerRef = useRef(null);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const index = parseInt(entry.target.getAttribute('data-index'), 10);
-          setCurrentIndex(index);
-        }
-      });
-    }, {
-      threshold: 0.6 // Trigger when at least 60% of the video is visible
-    });
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % REELS.length);
+  };
 
-    if (containerRef.current) {
-      const slides = containerRef.current.querySelectorAll('.reel-slide-snap');
-      slides.forEach(slide => observer.observe(slide));
-    }
-
-    return () => observer.disconnect();
-  }, []);
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev - 1 + REELS.length) % REELS.length);
+  };
 
   return (
-    <>
-      <div
-        ref={containerRef}
-        className="reels-container"
-        style={{ 
-          background: '#000',
-          position: 'relative',
-          width: '100%',
-          height: '100%',
-          overflowY: 'scroll',
-          overflowX: 'hidden',
-          scrollSnapType: 'y mandatory',
-          touchAction: 'pan-y', // Required for native scroll snapping to work
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehavior: 'contain',
-          userSelect: 'none'
-        }}
-      >
-        {REELS.map((reel, index) => (
-          <div 
-            key={reel.id} 
-            className="reel-slide-snap"
-            data-index={index}
-            style={{ 
-              width: '100%', 
-              height: '100%',
-              scrollSnapAlign: 'start',
-              scrollSnapStop: 'always',
-              position: 'relative',
-              flexShrink: 0
-            }}
-          >
-            <VideoPlayer 
-              src={reel.src} 
-              isActive={currentIndex === index} 
-              isGlobalMuted={isGlobalMuted}
-              onUnmute={() => setIsGlobalMuted(false)}
-            />
-            
-            {/* Contextual hints */}
-            {index < REELS.length - 1 && (
-              <span className="swipe-hint" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)', pointerEvents: 'none' }}>
-                ⬆ Swipe Up
-              </span>
-            )}
-            {index > 0 && (
-              <span className="swipe-hint" style={{ top: '80px', bottom: 'auto', textShadow: '0 2px 4px rgba(0,0,0,0.8)', pointerEvents: 'none' }}>
-                ⬇ Swipe Down
-              </span>
-            )}
-          </div>
-        ))}
-      </div>
+    <div className="reels-tv-container" style={{ 
+      width: '100%', 
+      height: '100%', 
+      backgroundColor: '#000',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={REELS[currentIndex].id}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+          style={{ width: '100%', height: '100%' }}
+        >
+          <VideoPlayer 
+            src={REELS[currentIndex].src} 
+            isActive={true} 
+            isGlobalMuted={isGlobalMuted}
+            onUnmute={() => setIsGlobalMuted(false)}
+          />
+        </motion.div>
+      </AnimatePresence>
 
-      {/* Page dots - keep fixed relative to the app content */}
+      {/* Navigation Controls */}
       <div style={{
         position: 'absolute',
-        right: 12,
-        top: '50%',
-        transform: 'translateY(-50%)',
+        inset: 0,
+        pointerEvents: 'none',
         display: 'flex',
-        flexDirection: 'column',
-        gap: 6,
-        zIndex: 10,
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0 20px',
+        zIndex: 10
+      }}>
+        <button 
+          onClick={handlePrev}
+          className="tv-nav-btn"
+          style={{
+            pointerEvents: 'auto',
+            background: 'rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(8px)',
+            border: 'none',
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            fontSize: '2rem',
+            color: 'white',
+            cursor: 'pointer',
+            display: currentIndex === 0 ? 'none' : 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          ◀
+        </button>
+
+        <button 
+          onClick={handleNext}
+          className="tv-nav-btn"
+          style={{
+            pointerEvents: 'auto',
+            background: 'rgba(255,255,255,0.1)',
+            backdropFilter: 'blur(8px)',
+            border: 'none',
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            fontSize: '2rem',
+            color: 'white',
+            cursor: 'pointer',
+            display: currentIndex === REELS.length - 1 ? 'none' : 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginLeft: 'auto'
+          }}
+        >
+          ▶
+        </button>
+      </div>
+
+      {/* Counter Label */}
+      <div style={{
+        position: 'absolute',
+        top: 20,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        padding: '8px 16px',
+        background: 'rgba(0,0,0,0.5)',
+        borderRadius: '20px',
+        fontSize: '0.9rem',
+        fontWeight: '700',
         pointerEvents: 'none'
       }}>
-        {REELS.map((_, i) => (
-          <div
-            key={i}
-            style={{
-               width: 6,
-               height: i === currentIndex ? 20 : 6,
-               borderRadius: 3,
-               background: i === currentIndex ? '#fff' : 'rgba(255,255,255,0.3)',
-               transition: 'all 0.3s ease',
-            }}
-          />
-        ))}
+        Video {currentIndex + 1} / {REELS.length}
       </div>
-    </>
+    </div>
   );
 }
