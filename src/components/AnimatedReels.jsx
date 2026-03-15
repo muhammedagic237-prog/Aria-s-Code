@@ -145,14 +145,16 @@ export default function AnimatedReels() {
         className="reels-container"
         style={{ 
           background: '#000',
-          position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
-          width: '100vw',
-          height: '100vh',
+          position: 'relative',
+          width: '100%',
+          height: '100%',
           overflowY: 'scroll',
           overflowX: 'hidden',
           scrollSnapType: 'y mandatory',
-          WebkitOverflowScrolling: 'touch'
+          touchAction: 'pan-y', // Required for native scroll snapping to work
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          userSelect: 'none'
         }}
       >
         {REELS.map((reel, index) => (
@@ -162,10 +164,11 @@ export default function AnimatedReels() {
             data-index={index}
             style={{ 
               width: '100%', 
-              height: '100vh',
+              height: '100%',
               scrollSnapAlign: 'start',
               scrollSnapStop: 'always',
-              position: 'relative'
+              position: 'relative',
+              flexShrink: 0
             }}
           >
             <VideoPlayer 
@@ -190,9 +193,9 @@ export default function AnimatedReels() {
         ))}
       </div>
 
-      {/* Page dots fixed above the scrolling container */}
+      {/* Page dots - keep fixed relative to the app content */}
       <div style={{
-        position: 'fixed',
+        position: 'absolute',
         right: 12,
         top: '50%',
         transform: 'translateY(-50%)',

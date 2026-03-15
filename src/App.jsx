@@ -86,10 +86,10 @@ function App() {
               {activeTab === 'reels' ? (
                 <motion.div
                   key="reels"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.25 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
                   style={{ width: '100%', height: '100%' }}
                 >
                   <AnimatedReels />
@@ -97,10 +97,10 @@ function App() {
               ) : (
                 <motion.div
                   key="games"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.25 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
                   style={{ width: '100%', height: '100%' }}
                 >
                   {renderGameContent()}
