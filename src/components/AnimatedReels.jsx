@@ -10,20 +10,40 @@ const REELS = Array.from({ length: REELS_COUNT }, (_, i) => ({
 
 function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
   const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const [hasError, setHasError] = useState(false);
   const [needsManualPlay, setNeedsManualPlay] = useState(false);
 
   useEffect(() => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || !canvasRef.current) return;
     
-    // Explicitly update the native DOM element's muted property
-    videoRef.current.muted = isGlobalMuted;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d', { alpha: false });
+    let animationId;
+
+    video.muted = isGlobalMuted;
+
+    const renderFrame = () => {
+      if (video.paused || video.ended) return;
+      
+      // Update canvas size if it doesn't match video
+      if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+      }
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      animationId = requestAnimationFrame(renderFrame);
+    };
 
     if (isActive) {
       setNeedsManualPlay(false);
-      const playPromise = videoRef.current.play();
+      const playPromise = video.play();
       if (playPromise !== undefined) {
-        playPromise.catch(err => {
+        playPromise.then(() => {
+          renderFrame();
+        }).catch(err => {
           console.warn('Autoplay blocked:', err);
           if (err.name === 'NotAllowedError') {
              setNeedsManualPlay(true);
@@ -33,20 +53,19 @@ function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
         });
       }
     } else {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
+      video.pause();
+      video.currentTime = 0;
+      cancelAnimationFrame(animationId);
     }
+
+    return () => cancelAnimationFrame(animationId);
   }, [isActive, src, isGlobalMuted]);
 
-  // The very first tap unmutes the video player permanently for all instances globaly
   const handleUnmute = () => {
     if (videoRef.current) {
       onUnmute();
       videoRef.current.muted = false;
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(err => console.warn('Manual play blocked', err));
-      }
+      videoRef.current.play().catch(err => console.warn('Manual play blocked', err));
       setNeedsManualPlay(false);
     }
   };
@@ -82,35 +101,27 @@ function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
         </div>
       ) : (
         <>
+          {/* THE NUCLEAR CORE: Hidden video, visible canvas. Safari cannot hijack a canvas. */}
           <video
             ref={videoRef}
             src={src}
             loop
-            autoPlay
             preload="auto"
-            playsInline={true}
+            playsInline
             webkit-playsinline="true"
-            x5-playsinline="true"
-            disableRemotePlayback={true}
-            disablePictureInPicture={true}
             muted={isGlobalMuted} 
-            controls={false}
-            style={{ 
-              width: '100%', 
-              height: '100%', 
-              objectFit: 'cover',
-              pointerEvents: 'none' 
-            }}
+            style={{ display: 'none' }}
             onError={() => setHasError(true)}
           />
           
-          {/* Invisible touch-shield to stop iOS Safari from "grabbing" the video element */}
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 5,
-            backgroundColor: 'transparent'
-          }} />
+          <canvas 
+            ref={canvasRef}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover'
+            }}
+          />
 
           {isActive && ((isGlobalMuted) || needsManualPlay) && (
             <div 
@@ -159,7 +170,7 @@ export default function AnimatedReels() {
       position: 'relative',
       overflow: 'hidden'
     }}>
-      {/* Persistent DOM Stack: All videos rendered at once to prevent iOS hijack */}
+      {/* Persistent DOM Stack: Using Canvas to prevent iOS hijack */}
       {REELS.map((reel, index) => (
         <VideoPlayer 
           key={reel.id}
