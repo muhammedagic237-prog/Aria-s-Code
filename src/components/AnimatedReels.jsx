@@ -20,7 +20,6 @@ function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
     videoRef.current.muted = isGlobalMuted;
 
     if (isActive) {
-      videoRef.current.currentTime = 0;
       setNeedsManualPlay(false);
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
@@ -35,6 +34,7 @@ function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
       }
     } else {
       videoRef.current.pause();
+      videoRef.current.currentTime = 0;
     }
   }, [isActive, src, isGlobalMuted]);
 
@@ -52,7 +52,18 @@ function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
   };
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative', backgroundColor: '#000' }}>
+    <div style={{ 
+      width: '100%', 
+      height: '100%', 
+      position: 'absolute', 
+      top: 0, 
+      left: 0,
+      backgroundColor: '#000',
+      opacity: isActive ? 1 : 0,
+      pointerEvents: isActive ? 'auto' : 'none',
+      transition: 'opacity 0.4s ease-in-out',
+      zIndex: isActive ? 1 : 0
+    }}>
       {hasError ? (
         <div style={{ 
           color: 'white', 
@@ -60,12 +71,13 @@ function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
           padding: '2rem',
           position: 'absolute',
           top: '50%',
-          transform: 'translateY(-50%)'
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '100%'
         }}>
           <h3>⚠️ Video Missing</h3>
-          <p style={{ opacity: 0.7, fontSize: '1rem', marginTop: '1rem' }}>
-            Please drop your screen-recorded video into the project folder:<br/><br/>
-            <code>AriasCode/public/reels/{src.split('/').pop()}</code>
+          <p style={{ opacity: 0.7, fontSize: '0.9rem', marginTop: '1rem' }}>
+            AriasCode/public/reels/{src.split('/').pop()}
           </p>
         </div>
       ) : (
@@ -81,12 +93,13 @@ function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
             x5-playsinline="true"
             disableRemotePlayback={true}
             disablePictureInPicture={true}
-            muted={isGlobalMuted} // Muted videos bypass Android's strict autoplay limits
+            muted={isGlobalMuted} 
+            controls={false}
             style={{ 
               width: '100%', 
               height: '100%', 
               objectFit: 'cover',
-              pointerEvents: 'none' // Crucial: Stop browsers from capturing child gestures
+              pointerEvents: 'none' 
             }}
             onError={() => setHasError(true)}
           />
@@ -99,7 +112,7 @@ function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
             backgroundColor: 'transparent'
           }} />
 
-          {((isGlobalMuted && isActive) || needsManualPlay) && (
+          {isActive && ((isGlobalMuted) || needsManualPlay) && (
             <div 
               onClick={handleUnmute}
               style={{
@@ -146,23 +159,16 @@ export default function AnimatedReels() {
       position: 'relative',
       overflow: 'hidden'
     }}>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={REELS[currentIndex].id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.4 }}
-          style={{ width: '100%', height: '100%' }}
-        >
-          <VideoPlayer 
-            src={REELS[currentIndex].src} 
-            isActive={true} 
-            isGlobalMuted={isGlobalMuted}
-            onUnmute={() => setIsGlobalMuted(false)}
-          />
-        </motion.div>
-      </AnimatePresence>
+      {/* Persistent DOM Stack: All videos rendered at once to prevent iOS hijack */}
+      {REELS.map((reel, index) => (
+        <VideoPlayer 
+          key={reel.id}
+          src={reel.src} 
+          isActive={currentIndex === index} 
+          isGlobalMuted={isGlobalMuted}
+          onUnmute={() => setIsGlobalMuted(false)}
+        />
+      ))}
 
       {/* Navigation Controls */}
       <div style={{
@@ -173,7 +179,7 @@ export default function AnimatedReels() {
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '0 20px',
-        zIndex: 10
+        zIndex: 50
       }}>
         <button 
           onClick={handlePrev}
@@ -232,7 +238,8 @@ export default function AnimatedReels() {
         borderRadius: '20px',
         fontSize: '0.9rem',
         fontWeight: '700',
-        pointerEvents: 'none'
+        pointerEvents: 'none',
+        zIndex: 60
       }}>
         Video {currentIndex + 1} / {REELS.length}
       </div>
