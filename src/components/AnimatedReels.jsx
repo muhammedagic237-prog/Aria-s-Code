@@ -74,18 +74,31 @@ function VideoPlayer({ src, isActive, isGlobalMuted, onUnmute }) {
             ref={videoRef}
             src={src}
             loop
+            autoPlay
             preload="auto"
             playsInline={true}
-            WebkitPlaysInline={true}
+            webkit-playsinline="true"
+            x5-playsinline="true"
+            disableRemotePlayback={true}
+            disablePictureInPicture={true}
             muted={isGlobalMuted} // Muted videos bypass Android's strict autoplay limits
             style={{ 
               width: '100%', 
               height: '100%', 
               objectFit: 'cover',
-              pointerEvents: 'none' // Crucial: Stop Android Chrome from capturing the swipe over the video
+              pointerEvents: 'none' // Crucial: Stop browsers from capturing child gestures
             }}
             onError={() => setHasError(true)}
           />
+          
+          {/* Invisible touch-shield to stop iOS Safari from "grabbing" the video element */}
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 5,
+            backgroundColor: 'transparent'
+          }} />
+
           {((isGlobalMuted && isActive) || needsManualPlay) && (
             <div 
               onClick={handleUnmute}
