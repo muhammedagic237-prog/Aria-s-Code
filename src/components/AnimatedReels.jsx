@@ -17,13 +17,13 @@ function VideoThumbnail({ src, onClick, label }) {
       style={{
         width: '100%',
         aspectRatio: '9/16',
-        borderRadius: '16px',
+        borderRadius: '24px',
         overflow: 'hidden',
         position: 'relative',
-        backgroundColor: '#111',
+        backgroundColor: '#fff',
         cursor: 'pointer',
-        boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
-        border: '2px solid rgba(255,255,255,0.1)'
+        boxShadow: '0 8px 24px rgba(255, 105, 180, 0.2)',
+        border: '4px solid white'
       }}
     >
       <video
@@ -32,32 +32,58 @@ function VideoThumbnail({ src, onClick, label }) {
         autoPlay
         loop
         playsInline
-        style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
+        preload="auto"
+        style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }}
       />
       <div style={{
         position: 'absolute',
         inset: 0,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
+        justifyContent: 'flex-end',
         alignItems: 'center',
-        background: 'linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.8))'
+        paddingBottom: '20px',
+        background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.4))'
       }}>
         <div style={{ 
-          width: '60px', height: '60px', borderRadius: '50%', 
-          backgroundColor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)',
+          width: '50px', height: '50px', borderRadius: '50%', 
+          backgroundColor: 'rgba(255,255,255,0.4)', backdropFilter: 'blur(4px)',
           display: 'flex', justifyContent: 'center', alignItems: 'center',
-          fontSize: '1.5rem', marginBottom: '10px'
+          fontSize: '1.2rem', marginBottom: '8px'
         }}>
           ▶
         </div>
-        <span style={{ fontWeight: '700', fontSize: '1.1rem', color: '#fff' }}>{label}</span>
+        <span style={{ fontWeight: '800', fontSize: '1rem', color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+          {label}
+        </span>
       </div>
     </div>
   );
 }
 
 function FullscreenPlayer({ src, onBack }) {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // This listener detects when the user closes the native iOS player
+    const handleExit = () => {
+      onBack();
+    };
+
+    video.addEventListener('webkitendfullscreen', handleExit);
+    video.addEventListener('pause', (e) => {
+      // In some cases, Safari just pauses when exiting. 
+      // If we are in fullscreen and it pauses, we might want to check if it's still fullscreen.
+    });
+
+    return () => {
+      video.removeEventListener('webkitendfullscreen', handleExit);
+    };
+  }, [onBack]);
+
   return (
     <div style={{
       position: 'fixed',
@@ -67,33 +93,8 @@ function FullscreenPlayer({ src, onBack }) {
       display: 'flex',
       flexDirection: 'column'
     }}>
-      {/* Heavy-Duty Close Button */}
-      <button 
-        onClick={onBack}
-        style={{
-          position: 'absolute',
-          top: '20px',
-          left: '20px',
-          zIndex: 1100,
-          width: '64px',
-          height: '64px',
-          borderRadius: '50%',
-          backgroundColor: '#ff4444',
-          border: '4px solid white',
-          color: 'white',
-          fontSize: '2rem',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-        }}
-      >
-        ✕
-      </button>
-
       <video
+        ref={videoRef}
         src={src}
         autoPlay
         controls
@@ -111,7 +112,6 @@ function FullscreenPlayer({ src, onBack }) {
 export default function AnimatedReels() {
   const [selectedVideoIndex, setSelectedVideoIndex] = useState(null);
 
-  // Return to gallery
   if (selectedVideoIndex !== null) {
     return (
       <FullscreenPlayer 
@@ -125,7 +125,7 @@ export default function AnimatedReels() {
     <div className="video-gallery-container" style={{ 
       width: '100%', 
       height: '100%', 
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#FFF0F5', // LavenderBlush (Pinkish)
       padding: '20px',
       overflowY: 'auto',
       WebkitOverflowScrolling: 'touch'
@@ -133,37 +133,28 @@ export default function AnimatedReels() {
       <h1 style={{ 
         textAlign: 'center', 
         marginBottom: '24px', 
-        color: '#fff',
-        fontSize: '1.8rem',
-        fontWeight: '800'
+        color: '#FF69B4', // HotPink
+        fontSize: '2rem',
+        fontWeight: '900',
+        textShadow: '2px 2px 0px white'
       }}>
-        Aria's Videos 📺
+        Aria’s Videos 💖
       </h1>
 
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
         gap: '20px',
-        paddingBottom: '40px'
+        paddingBottom: '60px'
       }}>
         {REELS.map((reel, index) => (
           <VideoThumbnail 
             key={reel.id}
             src={reel.src}
-            label={`Video ${index + 1}`}
+            label={`Scene ${index + 1}`}
             onClick={() => setSelectedVideoIndex(index)}
           />
         ))}
-      </div>
-
-      <div style={{ 
-        textAlign: 'center', 
-        opacity: 0.5, 
-        fontSize: '0.9rem', 
-        marginTop: '20px',
-        color: '#fff'
-      }}>
-        Tap a video to play!
       </div>
     </div>
   );
