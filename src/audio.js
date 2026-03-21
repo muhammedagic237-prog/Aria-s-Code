@@ -18,8 +18,6 @@ function getAudioContext() {
 // Ensure the context starts on the first interaction globally
 const initAudio = () => {
   getAudioContext();
-  window.removeEventListener('touchstart', initAudio);
-  window.removeEventListener('click', initAudio);
 };
 window.addEventListener('touchstart', initAudio, { once: true });
 window.addEventListener('click', initAudio, { once: true });

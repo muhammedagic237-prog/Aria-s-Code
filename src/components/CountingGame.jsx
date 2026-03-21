@@ -1,9 +1,6 @@
-import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion'; // eslint-disable-line no-unused-vars
-import { playCountTick, playSuccess, speakNumber, COUNT_EMOJIS } from '../audio';
-
-// BUBBLE_COLORS matches the app's palette
-import { BUBBLE_COLORS } from '../audio';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { playSuccess, speakNumber, BUBBLE_COLORS } from '../audio';
 
 export default function NumberGridGame({ onBack }) {
   const [activeNumber, setActiveNumber] = useState(null);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion'; // eslint-disable-line no-unused-vars
+import { motion, AnimatePresence } from 'framer-motion';
 import { playPop, playSuccess, BUBBLE_COLORS } from '../audio';
 
 function createBubble(id) {
@@ -56,13 +56,13 @@ export default function ColorBubbles({ onBack }) {
     playPop();
     if (navigator.vibrate) navigator.vibrate(20);
 
-    const newScore = score + 1;
-    setScore(newScore);
-
-    // Every 10 pops, play success
-    if (newScore % 10 === 0) {
-      setTimeout(playSuccess, 200);
-    }
+    setScore(prev => {
+      const newScore = prev + 1;
+      if (newScore % 10 === 0) {
+        setTimeout(playSuccess, 200);
+      }
+      return newScore;
+    });
 
     // Remove after animation
     setTimeout(() => {

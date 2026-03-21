@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion'; // eslint-disable-line no-unused-vars
+import { motion } from 'framer-motion';
 
 const GAMES = [
   { id: 'piano', icon: '🎹', label: 'Music', bg: 'linear-gradient(135deg, #EC4899, #F472B6)' },
