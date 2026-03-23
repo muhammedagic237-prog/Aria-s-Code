@@ -5,6 +5,7 @@ const GAMES = [
   { id: 'piano', icon: '🎹', label: 'Music', bg: 'linear-gradient(135deg, #EC4899, #F472B6)' },
   { id: 'bubbles', icon: '🫧', label: 'Bubbles', bg: 'linear-gradient(135deg, #3B82F6, #60A5FA)' },
   { id: 'counting', icon: '🔢', label: 'Numbers', bg: 'linear-gradient(135deg, #F97316, #FBBF24)' },
+  { id: 'starpopper', icon: '✨', label: 'Stars', bg: 'linear-gradient(135deg, #8B5CF6, #C084FC)' },
 ];
 
 export default function GamesHub({ onSelectGame }) {

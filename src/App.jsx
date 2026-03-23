@@ -6,6 +6,7 @@ import GamesHub from './components/GamesHub';
 import MusicKeyboard from './components/MusicKeyboard';
 import ColorBubbles from './components/ColorBubbles';
 import CountingGame from './components/CountingGame';
+import StarPopper from './components/StarPopper';
 
 function SplashScreen({ onFinish }) {
   useEffect(() => {
@@ -68,6 +69,8 @@ function App() {
         return <ColorBubbles onBack={handleBackToHub} />;
       case 'counting':
         return <CountingGame onBack={handleBackToHub} />;
+      case 'starpopper':
+        return <StarPopper onBack={handleBackToHub} />;
       default:
         return <GamesHub onSelectGame={handleSelectGame} />;
     }
