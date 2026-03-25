@@ -1,18 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { playPop, playSuccess } from '../audio';
+
+// Pre-compute twinkling star positions so they don't regenerate on every render
+const TWINKLE_STARS = Array.from({ length: 25 }, (_, i) => ({
+  key: `tw-${i}`,
+  width: Math.random() * 2.5 + 0.5,
+  top: `${Math.random() * 100}%`,
+  left: `${Math.random() * 100}%`,
+  opacity: Math.random() * 0.4 + 0.1,
+  duration: `${2 + Math.random() * 3}s`,
+  delay: `${Math.random() * 3}s`,
+}));
 
 export default function StarPopper({ onBack }) {
   const [stars, setStars] = useState([]);
   const [score, setScore] = useState(0);
 
-  const createStar = () => ({
-    id: Math.random().toString(36).substr(2, 9),
-    x: Math.random() * 80 + 10,
-    size: Math.random() * 30 + 50,
-    hue: Math.floor(Math.random() * 360),
-    speed: Math.random() * 3 + 4,
-  });
+  // Pre-compute the drift offset at creation time so it doesn't change on re-render
+  const createStar = () => {
+    const x = Math.random() * 80 + 10;
+    return {
+      id: Math.random().toString(36).substr(2, 9),
+      x,
+      xEnd: x + (Math.random() * 10 - 5), // fixed drift target
+      size: Math.random() * 30 + 50,
+      hue: Math.floor(Math.random() * 360),
+      speed: Math.random() * 3 + 4,
+    };
+  };
 
   // Spawn stars
   useEffect(() => {
@@ -50,30 +66,54 @@ export default function StarPopper({ onBack }) {
       </div>
 
       <div className="star-play-area">
+        {/* Static twinkling background — never re-renders */}
+        {TWINKLE_STARS.map(t => (
+          <div
+            key={t.key}
+            className="twinkle-dot"
+            style={{
+              width: t.width,
+              height: t.width,
+              top: t.top,
+              left: t.left,
+              opacity: t.opacity,
+              animationDuration: t.duration,
+              animationDelay: t.delay,
+            }}
+          />
+        ))}
+
         <AnimatePresence>
           {stars.map(star => (
             <motion.div
               key={star.id}
-              initial={{ top: '110%', left: `${star.x}%`, scale: 0 }}
-              animate={{ top: '-20%', left: `${star.x + (Math.random() * 10 - 5)}%`, scale: 1 }}
-              exit={{ scale: 2, opacity: 0, filter: 'blur(10px)' }}
+              className="star-element"
+              initial={{ y: '110vh', scale: 0, opacity: 0 }}
+              animate={{ y: '-20vh', scale: 1, opacity: 1 }}
+              exit={{ scale: 2, opacity: 0 }}
               transition={{
-                top: { duration: star.speed, ease: 'linear' },
-                left: { duration: star.speed, ease: 'linear' },
-                scale: { type: 'spring', stiffness: 200, damping: 10 },
-                exit: { duration: 0.3 }
+                y: { duration: star.speed, ease: 'linear' },
+                scale: { type: 'spring', stiffness: 200, damping: 12 },
+                opacity: { duration: 0.3 },
               }}
               onTapStart={() => handlePop(star.id)}
               style={{
                 position: 'absolute',
+                left: `${star.x}%`,
                 width: star.size,
                 height: star.size,
                 cursor: 'pointer',
                 touchAction: 'none',
-                filter: `drop-shadow(0 0 12px hsl(${star.hue}, 100%, 75%))`,
+                willChange: 'transform, opacity',
               }}
             >
-              <svg viewBox="0 0 51 48" fill={`hsl(${star.hue}, 100%, 85%)`} stroke={`hsl(${star.hue}, 100%, 60%)`} strokeWidth="2">
+              <svg
+                viewBox="0 0 51 48"
+                fill={`hsl(${star.hue}, 100%, 85%)`}
+                stroke={`hsl(${star.hue}, 100%, 60%)`}
+                strokeWidth="2"
+                style={{ filter: `drop-shadow(0 0 8px hsl(${star.hue}, 100%, 75%))` }}
+              >
                 <path d="M25.5 0L31.365 18.0461H50.3475L35.0315 29.1831L40.8965 47.2291L25.5 36.0921L10.1035 47.2291L15.9685 29.1831L0.652512 18.0461H19.635L25.5 0Z" />
                 <circle cx="20" cy="22" r="2" fill="#000" />
                 <circle cx="31" cy="22" r="2" fill="#000" />
@@ -82,26 +122,6 @@ export default function StarPopper({ onBack }) {
             </motion.div>
           ))}
         </AnimatePresence>
-
-        {/* Decorative twinkling background particles */}
-        {Array.from({ length: 30 }).map((_, i) => (
-          <div
-            key={`twinkle-${i}`}
-            style={{
-              position: 'absolute',
-              width: Math.random() * 3 + 1,
-              height: Math.random() * 3 + 1,
-              borderRadius: '50%',
-              background: 'white',
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              opacity: Math.random() * 0.5 + 0.1,
-              animation: `twinkle ${2 + Math.random() * 3}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 3}s`,
-              pointerEvents: 'none',
-            }}
-          />
-        ))}
       </div>
     </div>
   );

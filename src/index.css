@@ -710,6 +710,18 @@ html, body, #root {
   border: 1px solid rgba(255,255,255,0.1);
 }
 
+.star-element {
+  will-change: transform, opacity;
+}
+
+.twinkle-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+  pointer-events: none;
+  animation: twinkle ease-in-out infinite;
+}
+
 @keyframes twinkle {
   0%, 100% { opacity: 0.1; transform: scale(1); }
   50% { opacity: 0.6; transform: scale(1.5); }
