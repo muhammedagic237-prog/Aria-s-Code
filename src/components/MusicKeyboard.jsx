@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion'; // eslint-disable-line no-unused-vars
+import { motion } from 'framer-motion';
 import { playNote, PIANO_NOTES } from '../audio';
 
 export default function MusicKeyboard({ onBack }) {

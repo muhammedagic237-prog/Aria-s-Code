@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { playSuccess, speakNumber, BUBBLE_COLORS } from '../audio';
 
-export default function NumberGridGame({ onBack }) {
+export default function CountingGame({ onBack }) {
   const [activeNumber, setActiveNumber] = useState(null);
 
   // Numbers 1 through 10

@@ -35,14 +35,11 @@ export default function StarPopper({ onBack }) {
   // Remove stars that go off-screen
   useEffect(() => {
     const cleanup = setInterval(() => {
-      // In a real game loop we'd track Y position, but Framer Motion handles the animation.
-      // After ~8 seconds, assuming they floated up, remove them to avoid memory leaks.
-      if (stars.length > 15) {
-        setStars(prev => prev.slice(1));
-      }
+      // Remove excess stars to avoid memory leaks
+      setStars(prev => prev.length > 15 ? prev.slice(1) : prev);
     }, 4000);
     return () => clearInterval(cleanup);
-  }, [stars]);
+  }, []);
 
   const handlePop = (id) => {
     playPop();

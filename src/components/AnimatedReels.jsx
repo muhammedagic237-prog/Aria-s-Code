@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 // We expect the user to drop video1.mov, video2.mov, etc. into public/reels/
 const REELS_COUNT = 5; 
