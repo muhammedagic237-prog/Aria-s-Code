@@ -6,36 +6,25 @@ export default function StarPopper({ onBack }) {
   const [stars, setStars] = useState([]);
   const [score, setScore] = useState(0);
 
-  // Generate a random star
-  const createStar = () => {
-    return {
-      id: Math.random().toString(36).substr(2, 9),
-      x: Math.random() * 80 + 10, // 10% to 90%
-      y: 110, // Start below screen
-      size: Math.random() * 30 + 50, // 50px to 80px
-      hue: Math.floor(Math.random() * 360), // Random pastel hue
-      speed: Math.random() * 3 + 4, // 4s to 7s to float up
-    };
-  };
+  const createStar = () => ({
+    id: Math.random().toString(36).substr(2, 9),
+    x: Math.random() * 80 + 10,
+    size: Math.random() * 30 + 50,
+    hue: Math.floor(Math.random() * 360),
+    speed: Math.random() * 3 + 4,
+  });
 
-  // Keep spawning stars
+  // Spawn stars
   useEffect(() => {
     const interval = setInterval(() => {
-      setStars((prev) => {
-        if (prev.length < 12) {
-          return [...prev, createStar()];
-        }
-        return prev;
-      });
+      setStars(prev => prev.length < 12 ? [...prev, createStar()] : prev);
     }, 1200);
-
     return () => clearInterval(interval);
   }, []);
 
-  // Remove stars that go off-screen
+  // Cleanup excess stars
   useEffect(() => {
     const cleanup = setInterval(() => {
-      // Remove excess stars to avoid memory leaks
       setStars(prev => prev.length > 15 ? prev.slice(1) : prev);
     }, 4000);
     return () => clearInterval(cleanup);
@@ -43,31 +32,28 @@ export default function StarPopper({ onBack }) {
 
   const handlePop = (id) => {
     playPop();
-    setStars((prev) => prev.filter((s) => s.id !== id));
+    if (navigator.vibrate) navigator.vibrate(20);
+    setStars(prev => prev.filter(s => s.id !== id));
     setScore(s => {
-      const newScore = s + 1;
-      if (newScore > 0 && newScore % 10 === 0) {
-        playSuccess();
-      }
-      return newScore;
+      const n = s + 1;
+      if (n > 0 && n % 10 === 0) playSuccess();
+      return n;
     });
   };
 
   return (
-    <div className="game-container star-game-bg">
-      <header className="game-header">
-        <button className="back-btn" onClick={onBack}>
-          <span className="icon">🔙</span>
-        </button>
-        <span className="score-badge">⭐ {score}</span>
-      </header>
+    <div className="star-popper-game">
+      <div className="game-header">
+        <button className="back-btn" onClick={onBack}>←</button>
+        <h2>✨ Stars</h2>
+        <span className="star-score">⭐ {score}</span>
+      </div>
 
       <div className="star-play-area">
         <AnimatePresence>
-          {stars.map((star) => (
+          {stars.map(star => (
             <motion.div
               key={star.id}
-              className="star-element"
               initial={{ top: '110%', left: `${star.x}%`, scale: 0 }}
               animate={{ top: '-20%', left: `${star.x + (Math.random() * 10 - 5)}%`, scale: 1 }}
               exit={{ scale: 2, opacity: 0, filter: 'blur(10px)' }}
@@ -77,14 +63,14 @@ export default function StarPopper({ onBack }) {
                 scale: { type: 'spring', stiffness: 200, damping: 10 },
                 exit: { duration: 0.3 }
               }}
-              onTapStart={() => handlePop(star.id)} // Touch friendly!
+              onTapStart={() => handlePop(star.id)}
               style={{
                 position: 'absolute',
                 width: star.size,
                 height: star.size,
                 cursor: 'pointer',
                 touchAction: 'none',
-                filter: `drop-shadow(0 0 10px hsl(${star.hue}, 100%, 75%))`,
+                filter: `drop-shadow(0 0 12px hsl(${star.hue}, 100%, 75%))`,
               }}
             >
               <svg viewBox="0 0 51 48" fill={`hsl(${star.hue}, 100%, 85%)`} stroke={`hsl(${star.hue}, 100%, 60%)`} strokeWidth="2">
@@ -96,31 +82,27 @@ export default function StarPopper({ onBack }) {
             </motion.div>
           ))}
         </AnimatePresence>
-      </div>
 
-      <style>{`
-        .star-game-bg {
-          background-color: #0F172A; /* Deep Space Black */
-          background-image: radial-gradient(circle at 50% 100%, #1E1B4B 0%, #000000 100%);
-          position: relative;
-          overflow: hidden;
-        }
-        .star-play-area {
-          flex: 1;
-          position: relative;
-          width: 100%;
-          height: 100%;
-        }
-        .score-badge {
-          background: rgba(255, 255, 255, 0.2);
-          padding: 10px 20px;
-          border-radius: 20px;
-          color: white;
-          font-weight: bold;
-          font-size: 1.5rem;
-          backdrop-filter: blur(5px);
-        }
-      `}</style>
+        {/* Decorative twinkling background particles */}
+        {Array.from({ length: 30 }).map((_, i) => (
+          <div
+            key={`twinkle-${i}`}
+            style={{
+              position: 'absolute',
+              width: Math.random() * 3 + 1,
+              height: Math.random() * 3 + 1,
+              borderRadius: '50%',
+              background: 'white',
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              opacity: Math.random() * 0.5 + 0.1,
+              animation: `twinkle ${2 + Math.random() * 3}s ease-in-out infinite`,
+              animationDelay: `${Math.random() * 3}s`,
+              pointerEvents: 'none',
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 }

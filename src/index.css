@@ -191,14 +191,15 @@ html, body, #root {
   overflow-y: auto;
   padding: 20px;
   padding-top: max(20px, env(safe-area-inset-top, 20px));
+  background: linear-gradient(180deg, var(--pink-bg) 0%, #FDE8F0 100%);
 }
 
 .games-hub h1 {
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 900;
   text-align: center;
-  margin-bottom: 20px;
-  background: linear-gradient(135deg, var(--purple-light), var(--pink));
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, var(--purple-mid), var(--pink));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -207,27 +208,30 @@ html, body, #root {
 .games-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  max-width: 400px;
+  gap: 18px;
+  max-width: 420px;
   margin: 0 auto;
 }
 
 .game-card {
   aspect-ratio: 1;
-  border-radius: 24px;
+  border-radius: 28px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   border: none;
   font-family: var(--font);
   color: var(--white);
   font-weight: 800;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  transition: all 0.25s ease;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.25),
+    0 4px 8px rgba(0,0,0,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.3);
   position: relative;
   overflow: hidden;
 }
@@ -236,25 +240,64 @@ html, body, #root {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 24px;
-  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 28px;
+  border: 2.5px solid rgba(255,255,255,0.25);
+  pointer-events: none;
+}
+
+.game-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
   pointer-events: none;
 }
 
 .game-card:active {
-  transform: scale(0.93);
+  transform: scale(0.92) translateY(2px);
+  box-shadow:
+    0 4px 15px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.game-card:active::after {
+  opacity: 1;
 }
 
 .game-card .game-icon {
-  font-size: 3rem;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.2));
+  font-size: 3.5rem;
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.3));
+  animation: iconFloat 3s ease-in-out infinite;
+  line-height: 1;
+}
+
+.game-card:nth-child(2) .game-icon { animation-delay: 0.5s; }
+.game-card:nth-child(3) .game-icon { animation-delay: 1s; }
+.game-card:nth-child(4) .game-icon { animation-delay: 1.5s; }
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
 .game-card .game-label {
-  letter-spacing: 0.3px;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  font-size: 13px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
+.game-card .card-sparkle {
+  position: absolute;
+  font-size: 1rem;
+  opacity: 0.5;
+  pointer-events: none;
+}
 
 /* ===== Shared Game Layout ===== */
 .game-header {
@@ -290,6 +333,7 @@ html, body, #root {
 .game-header h2 {
   font-size: 1.3rem;
   font-weight: 800;
+  flex: 1;
 }
 
 /* ===== Music Keyboard ===== */
@@ -633,4 +677,40 @@ html, body, #root {
   0% { transform: scale(0); opacity: 0; }
   60% { transform: scale(1.1); }
   100% { transform: scale(1); opacity: 1; }
+}
+
+/* ===== Star Popper Game ===== */
+.star-popper-game {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: #0F172A;
+  background-image: radial-gradient(circle at 50% 100%, #1E1B4B 0%, #000000 100%);
+  color: var(--white);
+}
+
+.star-play-area {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.star-score {
+  margin-left: auto;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 1.2rem;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.5); }
 }

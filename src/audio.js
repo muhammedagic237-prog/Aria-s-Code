@@ -6,25 +6,37 @@ function getAudioContext() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-  // Try to resume if it's suspended (modern browser autoplay policy)
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume().catch(() => {
-      console.warn("AudioContext couldn't resume yet");
-    });
-  }
   return audioCtx;
 }
 
-// Ensure the context starts on the first interaction globally
-const initAudio = () => {
-  getAudioContext();
-};
-window.addEventListener('touchstart', initAudio, { once: true });
-window.addEventListener('click', initAudio, { once: true });
+// Ensure AudioContext is ready (must be called from a user gesture)
+async function ensureResumed() {
+  const ctx = getAudioContext();
+  if (ctx.state === 'suspended') {
+    try { await ctx.resume(); } catch (e) { /* ignore */ }
+  }
+  return ctx;
+}
+
+// Warm up on first touch/click (iOS/Android autoplay policy)
+function warmUp() {
+  const ctx = getAudioContext();
+  if (ctx.state === 'suspended') {
+    ctx.resume().catch(() => {});
+  }
+  // Also play a silent buffer to unlock audio on iOS Safari
+  const buf = ctx.createBuffer(1, 1, 22050);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.connect(ctx.destination);
+  src.start(0);
+}
+window.addEventListener('touchstart', warmUp, { once: true });
+window.addEventListener('click', warmUp, { once: true });
 
 // Play a musical note by frequency
-export function playNote(frequency, duration = 0.5, type = 'triangle') {
-  const ctx = getAudioContext();
+export async function playNote(frequency, duration = 0.5, type = 'triangle') {
+  const ctx = await ensureResumed();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
@@ -42,8 +54,8 @@ export function playNote(frequency, duration = 0.5, type = 'triangle') {
 }
 
 // Play a "pop" sound effect
-export function playPop() {
-  const ctx = getAudioContext();
+export async function playPop() {
+  const ctx = await ensureResumed();
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
